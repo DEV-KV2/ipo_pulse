@@ -14,11 +14,7 @@ Most IPO aggregator sites are either cluttered with ads or don't give you enough
 
 ## Screenshots
 
-### Before Sign In
-![Dashboard Before Sign In](/public/docs/before-signin.png)
-
-### After Sign In (AI Unlocked)
-![Dashboard After Sign In](/public/docs/after-signin.png)
+*(Screenshots will be added here)*
 
 ## How it works under the hood
 
