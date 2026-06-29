@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth Models
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  comments      Comment[]
+  watchlists    Watchlist[]
+  notifications Notification[]
+  portfolio     Portfolio?
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Domain Models
+
+model Company {
+  id                 String  @id @default(cuid())
+  name               String  @unique
+  logoUrl            String?
+  sector             String?
+  industry           String?
+  about              String? @db.Text
+  businessModel      String? @db.Text
+  marketOpportunity  String? @db.Text
+  competitiveLandscape String? @db.Text
+  
+  promoterHoldingPre  Float?
+  promoterHoldingPost Float?
+  managementDetails   Json? // board members, CEO, etc.
+  
+  ipos               IPO[]
+  financials         Financial[]
+  news               News[]
+}
+
+model IPO {
+  id                 String  @id @default(cuid())
+  slug               String  @unique // e.g. "zomato-ipo"
+  companyId          String
+  company            Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Basic IPO Details
+  issueSize          Float? // in Crores
+  priceBandLow       Float?
+  priceBandHigh      Float?
+  faceValue          Float?
+  lotSize            Int?
+  issueType          String? // e.g. "Book Built Issue"
+  exchange           String? // e.g. "BSE, NSE"
+  board              BoardType @default(MAINBOARD) // MAINBOARD or SME
+  
+  registrar          String?
+  leadManagers       Json? // array of strings
+  
+  // Dates
+  drhpFiledDate      DateTime?
+  rhpFiledDate       DateTime?
+  sebiApprovalDate   DateTime?
+  openDate           DateTime?
+  closeDate          DateTime?
+  basisOfAllotmentDate DateTime?
+  refundInitiatedDate DateTime?
+  dematCreditDate    DateTime?
+  listingDate        DateTime?
+  
+  // Status
+  status             IPOStatus @default(UPCOMING)
+  
+  // Related data
+  gmpHistory         GMPHistory[]
+  subscriptions      Subscription[]
+  brokerReviews      BrokerReview[]
+  aiAnalysis         AIAnalysis?
+  comments           Comment[]
+  documents          Document[]
+  watchlistedBy      Watchlist[]
+  historicalPerformance HistoricalPerformance?
+}
+
+enum BoardType {
+  MAINBOARD
+  SME
+}
+
+enum IPOStatus {
+  UPCOMING
+  OPEN
+  CLOSED
+  LISTED
+  WITHDRAWN
+}
+
+model Financial {
+  id          String  @id @default(cuid())
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  year        String  // e.g. "FY23"
+  revenue     Float?
+  profit      Float?
+  netWorth    Float?
+  assets      Float?
+  liabilities Float?
+  debt        Float?
+  cashFlow    Float?
+  eps         Float?
+  nav         Float?
+  roe         Float?
+  roce        Float?
+  ebitda      Float?
+}
+
+model GMPHistory {
+  id             String   @id @default(cuid())
+  ipoId          String
+  ipo            IPO      @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  date           DateTime @default(now())
+  gmp            Float
+  estimatedPrice Float?
+  estimatedGainPercentage Float?
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  ipoId         String
+  ipo           IPO      @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  date          DateTime @default(now())
+  qib           Float? // times subscribed
+  nii           Float? // times subscribed
+  retail        Float? // times subscribed
+  employee      Float? // times subscribed
+  shareholder   Float? // times subscribed
+  total         Float? // times subscribed
+}
+
+model BrokerReview {
+  id           String @id @default(cuid())
+  ipoId        String
+  ipo          IPO    @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  brokerName   String
+  rating       Rating
+  summary      String? @db.Text
+}
+
+enum Rating {
+  SUBSCRIBE
+  NEUTRAL
+  AVOID
+}
+
+model AIAnalysis {
+  id                  String @id @default(cuid())
+  ipoId               String @unique
+  ipo                 IPO    @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  
+  investmentScore     Int?
+  businessQuality     Int?
+  financialHealth     Int?
+  growthPotential     Int?
+  riskScore           Int?
+  valuationScore      Int?
+  
+  recommendation      AIRecommendation
+  reasoning           String? @db.Text
+  strengths           Json?   // array of strings
+  weaknesses          Json?   // array of strings
+  swotAnalysis        Json?   // { strengths: [], weaknesses: [], opportunities: [], threats: [] }
+  riskFactors         Json?   // categorized risks
+  
+  updatedAt           DateTime @updatedAt
+}
+
+enum AIRecommendation {
+  STRONG_SUBSCRIBE
+  SUBSCRIBE
+  NEUTRAL
+  AVOID
+  STRONG_AVOID
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  ipoId     String
+  ipo       IPO      @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipoId     String
+  ipo       IPO      @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, ipoId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  ipoId     String
+  ipo       IPO      @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  name      String   // e.g. "DRHP", "RHP"
+  url       String
+}
+
+model News {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  url       String?
+  source    String?
+  publishedAt DateTime
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+}
+
+model HistoricalPerformance {
+  id             String @id @default(cuid())
+  ipoId          String @unique
+  ipo            IPO    @relation(fields: [ipoId], references: [id], onDelete: Cascade)
+  listingPrice   Float?
+  listingGain    Float?
+  currentPrice   Float?
+  currentReturn  Float?
+  highestReturn  Float?
+  worstReturn    Float?
+  updatedAt      DateTime @updatedAt
+}
+
+model MarketIndex {
+  id           String @id @default(cuid())
+  name         String // Nifty 50, Sensex, Bank Nifty
+  currentValue Float
+  change       Float
+  changePercent Float
+  updatedAt    DateTime @updatedAt
+}
+
+model Portfolio {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings  Json?
+}
