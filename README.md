@@ -14,7 +14,12 @@ Most IPO aggregator sites are either cluttered with ads or don't give you enough
 
 ## Screenshots
 
-*(Screenshots will be added here)*
+<img width="1889" height="978" alt="image" src="https://github.com/user-attachments/assets/4f59fe35-d5bd-43a5-9f6c-ea6dc35bc967" />
+<img width="1915" height="984" alt="image" src="https://github.com/user-attachments/assets/7c7975be-4dfb-41e0-8c57-3595310fa7c7" />
+<img width="1902" height="693" alt="image" src="https://github.com/user-attachments/assets/cc10136e-0bd2-4ddf-9b72-bee9c414f571" />
+<img width="1875" height="713" alt="image" src="https://github.com/user-attachments/assets/a04149b2-c05d-4380-a3c2-b347efd72235" />
+<img width="1876" height="981" alt="image" src="https://github.com/user-attachments/assets/0585cf7a-6ed3-4b50-beaf-c02121979e02" />
+<img width="1899" height="910" alt="image" src="https://github.com/user-attachments/assets/80fd4f82-abc5-47db-80ca-b962db54b4b0" />
 
 ## How it works under the hood
 
